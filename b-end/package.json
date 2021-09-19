@@ -1,0 +1,15 @@
+{
+  "name": "ig1s-bend",
+  "version": "1.0.0",
+  "description": "get instagram followers and followings list",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Ichan Kabir <ichankabir@gmail.com>",
+  "license": "MIT",
+  "dependencies": {
+    "puppeteer": "^10.2.0"
+  }
+}
