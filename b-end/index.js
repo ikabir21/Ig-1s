@@ -1,32 +1,29 @@
 import puppeteer from "puppeteer";
 import keys from "./config/keys.js";
 
-const scrapeFollowers = async (
-	page,
-	scrapeItem,
-	itemCount,
-	selectors
-) => {
+const scrapeFollowers = async (page, scrapeItem, itemCount, child) => {
 	let items = [];
 	try {
-		await page.waitForSelector(selectors.selectorToClick);
-		await page.click(selectors.selectorToClick);
+		await click(
+			page,
+			`#react-root > section > main > div > header > section > ul > li:nth-child(${child}) > a > span`
+		);
 
-		const followersDiv = selectors.divToScroll;
+		const followersDiv = "body > div.RnEpo.Yx5HN > div > div > div.isgrP";
 		await page.waitForSelector(followersDiv);
 
 		while (items.length < itemCount) {
 			items = await page.evaluate(scrapeItem);
 
-			await page.evaluate(selector => {
+			await page.evaluate((selector) => {
 				const element = document.querySelector(selector);
-				if ( element ) {
-						element.scrollTop += element.offsetHeight;
-						console.error(`Scrolled to selector ${selector}`);
+				if (element) {
+					element.scrollTop += element.offsetHeight;
+					console.error(`Scrolled to selector ${selector}`);
 				} else {
-						console.error(`cannot find selector ${selector}`);
+					console.error(`cannot find selector ${selector}`);
 				}
-		}, followersDiv);
+			}, followersDiv);
 		}
 	} catch (error) {
 		console.log(error);
@@ -60,6 +57,11 @@ const handlePopup = async (page, selector) => {
 	}
 };
 
+const click = async (page, selector) => {
+	await page.waitForSelector(selector);
+	await page.click(selector);
+};
+
 const scrapeData = async () => {
 	const NODE_ENV = keys.NODE_ENV;
 	let browser;
@@ -69,7 +71,7 @@ const scrapeData = async () => {
 		if (NODE_ENV != "production") {
 			browser = await puppeteer.connect({
 				browserWSEndpoint:
-					"ws://127.0.0.1:9222/devtools/browser/41afd70e-0625-4b02-9f65-0cf8dfe5aec5",
+					"ws://127.0.0.1:9222/devtools/browser/3bb11ebb-6333-4902-8c4f-2c73589e12b0",
 				defaultViewport: null,
 				args: ["--start-maximized", "-incognito"],
 			});
@@ -105,34 +107,17 @@ const scrapeData = async () => {
 			await page.click("#loginForm > div > div:nth-child(3) > button > div");
 			await page.waitForNavigation();
 
-			const isSave = await handlePopup(
-				page,
-				"#react-root > section > main > div > div > div > div > button"
-			);
-
+			const savePopupSelector =
+				"#react-root > section > main > div > div > div > div > button";
+			const isSave = await handlePopup(page, savePopupSelector);
 			if (isSave) {
-				await page.waitForSelector(
-					"#react-root > section > main > div > div > div > div > button"
-				);
-				await page.click(
-					"#react-root > section > main > div > div > div > div > button"
-				);
+				await click(savePopupSelector);
 				await page.waitForNavigation();
 			}
 
-			const isPopup = await handlePopup(
-				page,
-				"body > div.RnEpo.Yx5HN > div > div > div > div.mt3GC > button.aOOlW.HoLwm"
-			);
-
-			if (isPopup) {
-				await page.waitForSelector(
-					"body > div.RnEpo.Yx5HN > div > div > div > div.mt3GC > button.aOOlW.HoLwm"
-				);
-				await page.click(
-					"body > div.RnEpo.Yx5HN > div > div > div > div.mt3GC > button.aOOlW.HoLwm"
-				);
-			}
+			const otherPopupSelector = "body > div.RnEpo.Yx5HN > div > div > div > div.mt3GC > button.aOOlW.HoLwm";
+			const isPopup = await handlePopup(page, otherPopupSelector);
+			isPopup && click(otherPopupSelector);
 		}
 
 		const isProfile = await handlePopup(
@@ -143,18 +128,13 @@ const scrapeData = async () => {
 		console.log(isProfile, "Profile");
 
 		if (isProfile) {
-			await page.click(
-				"#react-root > section > nav > div._8MQSO.Cx7Bp > div > div > div.ctQZg > div > div:nth-child(5)"
-			);
-			await page.waitForSelector(
-				"#react-root > section > nav > div._8MQSO.Cx7Bp > div > div > div.ctQZg > div > div:nth-child(5) > div.poA5q > div.uo5MA._2ciX.tWgj8.XWrBI > div._01UL2 > a:nth-child(1)"
-			);
-			await page.click(
-				"#react-root > section > nav > div._8MQSO.Cx7Bp > div > div > div.ctQZg > div > div:nth-child(5) > div.poA5q > div.uo5MA._2ciX.tWgj8.XWrBI > div._01UL2 > a:nth-child(1)"
-			);
+			await page.click("#react-root > section > nav > div._8MQSO.Cx7Bp > div > div > div.ctQZg > div > div:nth-child(5)");
+			const profileSelector = "#react-root > section > nav > div._8MQSO.Cx7Bp > div > div > div.ctQZg > div > div:nth-child(5) > div.poA5q > div.uo5MA._2ciX.tWgj8.XWrBI > div._01UL2 > a:nth-child(1)";
+			await click(page, profileSelector);
 		}
 
-		const selector = "#react-root > section > main > div > header > section > ul";
+		const selector =
+			"#react-root > section > main > div > header > section > ul";
 		await page.waitForSelector(selector);
 		userInfo = await page.evaluate(async (selector) => {
 			let user = {};
@@ -168,25 +148,25 @@ const scrapeData = async () => {
 			return user;
 		}, selector);
 
+		userInfo.followersArr = await scrapeFollowers(
+			page,
+			scrapeItem,
+			userInfo.followersCount,
+			2
+		);
 
-		const followersSelector = {
-			selectorToClick: "#react-root > section > main > div > header > section > ul > li:nth-child(2) > a > span",
-			divToScroll: "body > div.RnEpo.Yx5HN > div > div > div.isgrP"
-		}
-		userInfo.followersArr = await scrapeFollowers(page, scrapeItem, userInfo.followersCount, followersSelector);
+		const cancelButton =
+			"body > div.RnEpo.Yx5HN > div > div > div:nth-child(1) > div > div:nth-child(3) > button";
+		await click(page, cancelButton);
 
-		const cancelButton = "body > div.RnEpo.Yx5HN > div > div > div:nth-child(1) > div > div:nth-child(3) > button";
-		await page.waitForSelector(cancelButton);
-		await page.click(cancelButton);
+		userInfo.followingsArr = await scrapeFollowers(
+			page,
+			scrapeItem,
+			userInfo.followingsCount,
+			3
+		);
 
-		const followingsSelector = {
-			selectorToClick: "#react-root > section > main > div > header > section > ul > li:nth-child(3) > a > span",
-			divToScroll: "body > div.RnEpo.Yx5HN > div > div > div.isgrP"
-		}
-		userInfo.followingsArr = await scrapeFollowers(page, scrapeItem, userInfo.followingsCount, followingsSelector);
-
-		await page.waitForSelector(cancelButton);
-		await page.click(cancelButton);
+		await click(page, cancelButton);
 
 		// await page.waitForSelector("#f3e4fbe0cb5191c > div > div > span > a");
 
