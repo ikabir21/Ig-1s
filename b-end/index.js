@@ -1,9 +1,67 @@
 import puppeteer from "puppeteer";
 import keys from "./config/keys.js";
 
-const scrapeData = async (data) => {
-	const NODE_ENV = keys.NODE_ENV;
+const scrapeFollowers = async (
+	page,
+	scrapeItem,
+	itemCount,
+	selectors
+) => {
+	let items = [];
+	try {
+		await page.waitForSelector(selectors.selectorToClick);
+		await page.click(selectors.selectorToClick);
 
+		const followersDiv = selectors.divToScroll;
+		await page.waitForSelector(followersDiv);
+
+		while (items.length < itemCount) {
+			items = await page.evaluate(scrapeItem);
+
+			await page.evaluate(selector => {
+				const element = document.querySelector(selector);
+				if ( element ) {
+						element.scrollTop += element.offsetHeight;
+						console.error(`Scrolled to selector ${selector}`);
+				} else {
+						console.error(`cannot find selector ${selector}`);
+				}
+		}, followersDiv);
+		}
+	} catch (error) {
+		console.log(error);
+	}
+	return items;
+};
+
+const scrapeItem = () => {
+	const items = [];
+
+	const extEl = document.querySelectorAll(
+		"body > div.RnEpo.Yx5HN > div > div > div.isgrP > ul > div > li"
+	);
+
+	for (let el of extEl) {
+		items.push(el.innerText.split("\n")[0]);
+	}
+	return items;
+};
+
+const handlePopup = async (page, selector) => {
+	try {
+		await page.waitForSelector(selector);
+		const res = await page.evaluate(async (selector) => {
+			const res = await document.querySelector(selector).innerHTML;
+			return res ? true : false;
+		}, selector);
+		return res;
+	} catch (error) {
+		return error;
+	}
+};
+
+const scrapeData = async () => {
+	const NODE_ENV = keys.NODE_ENV;
 	let browser;
 	let userInfo;
 	try {
@@ -11,7 +69,7 @@ const scrapeData = async (data) => {
 		if (NODE_ENV != "production") {
 			browser = await puppeteer.connect({
 				browserWSEndpoint:
-					"ws://127.0.0.1:9222/devtools/browser/60766b51-7556-43e1-8f96-cea47e6ff6a9",
+					"ws://127.0.0.1:9222/devtools/browser/41afd70e-0625-4b02-9f65-0cf8dfe5aec5",
 				defaultViewport: null,
 				args: ["--start-maximized", "-incognito"],
 			});
@@ -79,12 +137,14 @@ const scrapeData = async (data) => {
 
 		const isProfile = await handlePopup(
 			page,
-			"#react-root > section > nav > div._8MQSO.Cx7Bp > div > div > div.ctQZg > div > div:nth-child(5) > span > img"
+			"#react-root > section > nav > div._8MQSO.Cx7Bp > div > div > div.ctQZg > div > div:nth-child(5)"
 		);
+
+		console.log(isProfile, "Profile");
 
 		if (isProfile) {
 			await page.click(
-				"#react-root > section > nav > div._8MQSO.Cx7Bp > div > div > div.ctQZg > div > div:nth-child(5) > span > img"
+				"#react-root > section > nav > div._8MQSO.Cx7Bp > div > div > div.ctQZg > div > div:nth-child(5)"
 			);
 			await page.waitForSelector(
 				"#react-root > section > nav > div._8MQSO.Cx7Bp > div > div > div.ctQZg > div > div:nth-child(5) > div.poA5q > div.uo5MA._2ciX.tWgj8.XWrBI > div._01UL2 > a:nth-child(1)"
@@ -96,30 +156,37 @@ const scrapeData = async (data) => {
 
 		const selector = "#react-root > section > main > div > header > section > ul";
 		await page.waitForSelector(selector);
-		userInfo = await page.evaluate((selector) => {
-			let user = null;
-			user.followersCount = await document.querySelector(`${selector} > li:nth-child(2) > a`).innerText;
-			user.followersCount = await document.querySelector(`${selector} > li:nth-child(3) > a > span`).innerText;
+		userInfo = await page.evaluate(async (selector) => {
+			let user = {};
+			user.followersCount = await document.querySelector(
+				`${selector} > li:nth-child(2) > a > span`
+			).innerText;
+			user.followingsCount = await document.querySelector(
+				`${selector} > li:nth-child(3) > a > span`
+			).innerText;
 
 			return user;
-		})
+		}, selector);
 
-		console.log(
-			"Followers: " + userInfo.followersCount + "\n" + "Following: " + userInfo.followingCount
-		);
 
-		// await page.click(
-		// 	"#react-root > section > main > div > header > section > ul > li:nth-child(2) > a"
-		// );
+		const followersSelector = {
+			selectorToClick: "#react-root > section > main > div > header > section > ul > li:nth-child(2) > a > span",
+			divToScroll: "body > div.RnEpo.Yx5HN > div > div > div.isgrP"
+		}
+		userInfo.followersArr = await scrapeFollowers(page, scrapeItem, userInfo.followersCount, followersSelector);
 
-		//Get followers list
-		// await page.waitForSelector(
-		// 	"body > div.RnEpo.Yx5HN > div > div > div:nth-child(2) > ul > div > li"
-		// );
+		const cancelButton = "body > div.RnEpo.Yx5HN > div > div > div:nth-child(1) > div > div:nth-child(3) > button";
+		await page.waitForSelector(cancelButton);
+		await page.click(cancelButton);
 
-		const arr = await scrapeFollowers(page, extItems, 238, 10);
+		const followingsSelector = {
+			selectorToClick: "#react-root > section > main > div > header > section > ul > li:nth-child(3) > a > span",
+			divToScroll: "body > div.RnEpo.Yx5HN > div > div > div.isgrP"
+		}
+		userInfo.followingsArr = await scrapeFollowers(page, scrapeItem, userInfo.followingsCount, followingsSelector);
 
-		console.log(arr);
+		await page.waitForSelector(cancelButton);
+		await page.click(cancelButton);
 
 		// await page.waitForSelector("#f3e4fbe0cb5191c > div > div > span > a");
 
@@ -169,47 +236,23 @@ const userInfo = await scrapeData();
 
 console.log(userInfo);
 
-const scrapeFollowers = async (
-	page,
-	extItems,
-	itemCount,
-	scrollDelay = 800
-) => {
-	let items = [];
-	try {
-		let prevHeight;
-		while (items.length < itemCount) {
-			items = await page.evaluate(extItems);
-			prevHeight = await page.evaluate("document.body.scrollHeight");
-			await page.evaluate("window.scrollTo(0, document.body.scrollHeight)");
-			await page.waitForFunction(`document.body.scrollHeight > ${prevHeight}`);
-			await page.waitForTimeout(scrollDelay);
-		}
-	} catch (error) {}
-	return items;
-};
-
-const extItems = () => {
-	const followersArr = [];
-	const extEl = document.querySelectorAll(
-		"body > div.RnEpo.Yx5HN > div > div > div:nth-child(2) > ul > div > li"
-	);
-	for (let el of extEl) {
-		followersArr.push(el.innerText.split("\n")[0]);
-	}
-	return followersArr;
-};
-
-const handlePopup = async (page, selector) => {
-	try {
-		await page.waitForSelector(selector);
-		await page.evaluate(() => {
-			return document.querySelector(selector) ? true : false;
+async function autoScroll(page) {
+	await page.evaluate(async () => {
+		await new Promise((resolve, reject) => {
+			var totalHeight = 0;
+			var distance = 100;
+			var timer = setInterval(() => {
+				var scrollHeight = document.body.scrollHeight;
+				window.scrollBy(0, distance);
+				totalHeight += distance;
+				if (totalHeight >= scrollHeight) {
+					clearInterval(timer);
+					resolve();
+				}
+			}, 300);
 		});
-	} catch (error) {
-		return false;
-	}
-};
+	});
+}
 
 // const wait = (duration) => {
 //   console.log('waiting', duration);
