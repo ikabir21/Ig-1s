@@ -39,7 +39,10 @@ const scrapeItem = () => {
 	);
 
 	for (let el of extEl) {
-		items.push(el.innerText.split("\n")[0]);
+		items.push({
+			username: el.innerText.split("\n")[0],
+			name: el.innerText.split("\n")[1],
+		});
 	}
 	return items;
 };
@@ -71,7 +74,7 @@ const scrapeData = async () => {
 		if (NODE_ENV != "production") {
 			browser = await puppeteer.connect({
 				browserWSEndpoint:
-					"ws://127.0.0.1:9222/devtools/browser/3bb11ebb-6333-4902-8c4f-2c73589e12b0",
+					"ws://127.0.0.1:9222/devtools/browser/7145beec-a65e-4cf8-8d97-29833aedcc3d",
 				defaultViewport: null,
 				args: ["--start-maximized", "-incognito"],
 			});
@@ -115,7 +118,8 @@ const scrapeData = async () => {
 				await page.waitForNavigation();
 			}
 
-			const otherPopupSelector = "body > div.RnEpo.Yx5HN > div > div > div > div.mt3GC > button.aOOlW.HoLwm";
+			const otherPopupSelector =
+				"body > div.RnEpo.Yx5HN > div > div > div > div.mt3GC > button.aOOlW.HoLwm";
 			const isPopup = await handlePopup(page, otherPopupSelector);
 			isPopup && click(otherPopupSelector);
 		}
@@ -128,8 +132,11 @@ const scrapeData = async () => {
 		console.log(isProfile, "Profile");
 
 		if (isProfile) {
-			await page.click("#react-root > section > nav > div._8MQSO.Cx7Bp > div > div > div.ctQZg > div > div:nth-child(5)");
-			const profileSelector = "#react-root > section > nav > div._8MQSO.Cx7Bp > div > div > div.ctQZg > div > div:nth-child(5) > div.poA5q > div.uo5MA._2ciX.tWgj8.XWrBI > div._01UL2 > a:nth-child(1)";
+			await page.click(
+				"#react-root > section > nav > div._8MQSO.Cx7Bp > div > div > div.ctQZg > div > div:nth-child(5)"
+			);
+			const profileSelector =
+				"#react-root > section > nav > div._8MQSO.Cx7Bp > div > div > div.ctQZg > div > div:nth-child(5) > div.poA5q > div.uo5MA._2ciX.tWgj8.XWrBI > div._01UL2 > a:nth-child(1)";
 			await click(page, profileSelector);
 		}
 
@@ -144,7 +151,9 @@ const scrapeData = async () => {
 			user.followingsCount = await document.querySelector(
 				`${selector} > li:nth-child(3) > a > span`
 			).innerText;
-
+			user.noOfPosts = await document.querySelector(
+				`${selector} > li:nth-child(1) > span > span`
+			).innerText;
 			return user;
 		}, selector);
 
