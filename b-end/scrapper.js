@@ -1,72 +1,9 @@
+"use-strict";
 import puppeteer from "puppeteer";
-import keys from "./config/keys.js";
 
-const scrapeFollowers = async (page, scrapeItem, itemCount, child) => {
-	let items = [];
-	try {
-		await click(
-			page,
-			`#react-root > section > main > div > header > section > ul > li:nth-child(${child}) > a > span`
-		);
-
-		const followersDiv = "body > div.RnEpo.Yx5HN > div > div > div.isgrP";
-		await page.waitForSelector(followersDiv);
-
-		while (items.length < itemCount) {
-			items = await page.evaluate(scrapeItem);
-
-			await page.evaluate((selector) => {
-				const element = document.querySelector(selector);
-				if (element) {
-					element.scrollTop += element.offsetHeight;
-					console.error(`Scrolled to selector ${selector}`);
-				} else {
-					console.error(`cannot find selector ${selector}`);
-				}
-			}, followersDiv);
-		}
-	} catch (error) {
-		console.log(error);
-	}
-	return items;
-};
-
-const scrapeItem = () => {
-	const items = [];
-
-	const extEl = document.querySelectorAll(
-		"body > div.RnEpo.Yx5HN > div > div > div.isgrP > ul > div > li"
-	);
-
-	for (let el of extEl) {
-		items.push({
-			username: el.innerText.split("\n")[0],
-			name: el.innerText.split("\n")[1],
-		});
-	}
-	return items;
-};
-
-const handlePopup = async (page, selector) => {
-	try {
-		await page.waitForSelector(selector);
-		const res = await page.evaluate(async (selector) => {
-			const res = await document.querySelector(selector).innerHTML;
-			return res ? true : false;
-		}, selector);
-		return res;
-	} catch (error) {
-		return error;
-	}
-};
-
-const click = async (page, selector) => {
-	await page.waitForSelector(selector);
-	await page.click(selector);
-};
-
-const scrapeData = async () => {
-	const NODE_ENV = keys.NODE_ENV;
+const scrapeData = async (data) => {
+	const NODE_ENV = process.env.NODE_ENV;
+	const URL = process.env.URL;
 	let browser;
 	let userInfo;
 	try {
@@ -93,7 +30,7 @@ const scrapeData = async () => {
 		);
 		page.once("domcontentloaded", () => console.info("✅ DOM is ready"));
 		page.once("load", () => console.info("✅ Page is loaded"));
-		await page.goto("https://www.instagram.com");
+		await page.goto(URL);
 		await page.setDefaultTimeout(0);
 
 		//Signin
@@ -101,11 +38,11 @@ const scrapeData = async () => {
 			await page.waitForSelector("#loginForm");
 			await page.type(
 				"#loginForm > div > div:nth-child(1) > div > label > input",
-				keys.ig.username
+				data.username
 			);
 			await page.type(
 				"#loginForm > div > div:nth-child(2) > div > label > input",
-				keys.ig.password
+				data.password
 			);
 			await page.click("#loginForm > div > div:nth-child(3) > button > div");
 			await page.waitForNavigation();
@@ -221,27 +158,91 @@ const scrapeData = async () => {
 	return userInfo;
 };
 
-const userInfo = await scrapeData();
+const scrapeFollowers = async (page, scrapeItem, itemCount, child) => {
+	let items = [];
+	try {
+		await click(
+			page,
+			`#react-root > section > main > div > header > section > ul > li:nth-child(${child}) > a > span`
+		);
 
-console.log(userInfo);
+		const followersDiv = "body > div.RnEpo.Yx5HN > div > div > div.isgrP";
+		await page.waitForSelector(followersDiv);
 
-async function autoScroll(page) {
-	await page.evaluate(async () => {
-		await new Promise((resolve, reject) => {
-			var totalHeight = 0;
-			var distance = 100;
-			var timer = setInterval(() => {
-				var scrollHeight = document.body.scrollHeight;
-				window.scrollBy(0, distance);
-				totalHeight += distance;
-				if (totalHeight >= scrollHeight) {
-					clearInterval(timer);
-					resolve();
+		while (items.length < itemCount) {
+			items = await page.evaluate(scrapeItem);
+
+			await page.evaluate((selector) => {
+				const element = document.querySelector(selector);
+				if (element) {
+					element.scrollTop += element.offsetHeight;
+					console.error(`Scrolled to selector ${selector}`);
+				} else {
+					console.error(`cannot find selector ${selector}`);
 				}
-			}, 300);
+			}, followersDiv);
+		}
+	} catch (error) {
+		console.log(error);
+	}
+	return items;
+};
+
+const scrapeItem = () => {
+	const items = [];
+
+	const extEl = document.querySelectorAll(
+		"body > div.RnEpo.Yx5HN > div > div > div.isgrP > ul > div > li"
+	);
+
+	
+	for (let el of extEl) {
+		items.push({
+			username: el.innerText.split("\n")[0],
+			name: el.innerText.split("\n")[1],
+			avatart: el.children[0].children[0].children[0].children[0].children[1].children[0].src
 		});
-	});
-}
+	}
+	return items;
+};
+
+const handlePopup = async (page, selector) => {
+	try {
+		await page.waitForSelector(selector);
+		const res = await page.evaluate(async (selector) => {
+			const res = await document.querySelector(selector).innerHTML;
+			return res ? true : false;
+		}, selector);
+		return res;
+	} catch (error) {
+		return error;
+	}
+};
+
+const click = async (page, selector) => {
+	await page.waitForSelector(selector);
+	await page.click(selector);
+};
+
+export default scrapeData;
+
+// async function autoScroll(page) {
+// 	await page.evaluate(async () => {
+// 		await new Promise((resolve, reject) => {
+// 			var totalHeight = 0;
+// 			var distance = 100;
+// 			var timer = setInterval(() => {
+// 				var scrollHeight = document.body.scrollHeight;
+// 				window.scrollBy(0, distance);
+// 				totalHeight += distance;
+// 				if (totalHeight >= scrollHeight) {
+// 					clearInterval(timer);
+// 					resolve();
+// 				}
+// 			}, 300);
+// 		});
+// 	});
+// }
 
 // const wait = (duration) => {
 //   console.log('waiting', duration);
