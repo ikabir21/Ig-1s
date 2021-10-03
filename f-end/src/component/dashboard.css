@@ -1,0 +1,205 @@
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@100;200;300;400&display=swap');
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: boader-box;
+  }
+  body {
+    background-color: #8fd3f2;
+  }
+  main {
+    min-height: 770px;
+    background-image: linear-gradient(
+      to right top,
+      #c0cee1,
+      #acd0ec,
+      #8fd3f2,
+      #69d7f4,
+      #31daee
+    );
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: Poppins;
+  }
+  .glass {
+    background: white;
+    min-height: 600px;
+    width: 900px;
+    min-width: 750px;
+    background: linear-gradient(
+      to right bottom,
+      rgba(255, 255, 255, 0.7),
+      rgba(255, 255, 255, 0.2)
+    );
+    border-radius: 1.5rem;
+    z-index: 1;
+    backdrop-filter: blur(2rem);
+    display: flex;
+  }
+  .circle1,
+  .circle2 {
+    background: white;
+    background: linear-gradient(
+      to right bottom,
+      rgba(255, 255, 255, 0.8),
+      rgba(255, 255, 255, 0.1)
+    );
+    width: 13rem;
+    height: 13rem;
+    position: absolute;
+    border-radius: 50%;
+  }
+  .circle1 {
+    bottom: 1vh;
+    left: 30vh;
+  }
+  .circle2 {
+    top: 2vh;
+    right: 10vw;
+  }
+  .dashboard {
+    flex: 1.1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: space-evenly;
+    text-align: center;
+    background: linear-gradient(
+      to right bottom,
+      rgba(255, 255, 255, 0.7),
+      rgba(255, 255, 255, 0.3)
+    );
+    border-radius: 1.5rem;
+  }
+  .content {
+    flex: 3;
+  }
+  .images {
+    width: 30px;
+    height: 30px;
+    position: relative;
+    bottom: 15px;
+    margin: 10px 5px;
+  }
+  
+  .userimg {
+    width: 95px;
+    height: 101px;
+  }
+  
+  .link {
+    display: flex;
+    margin: 0.7rem 0;
+    padding: 0 3rem;
+    cursor: pointer;
+  }
+  
+  .links {
+    margin-top: 5vh;
+  }
+  
+  h4 {
+    color: #4b4453;
+    opacity: 0.9;
+    font-weight: 600;
+  }
+  h1 {
+    color: rgb(22, 10, 10);
+    font-size: 2.5rem;
+    opacity: 0.7;
+    font-weight: 600;
+    text-align: center;
+  }
+  p {
+    color: #201f20;
+    opacity: 0.9;
+    font-weight: 500;
+    shape-inside: auto;
+  }
+  /*content*/
+  
+  .content {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 0 4rem;
+  }
+  .about,
+  .experience {
+    background: linear-gradient(
+      to right bottom,
+      rgba(255, 255, 255, 0.7),
+      rgba(255, 255, 255, 0.3)
+    );
+    border-radius: 1rem;
+    margin: 2rem 0;
+    height: 320px;
+    padding: 0.5rem 1rem;
+    color: #374045;
+    box-shadow: 6px 6px 20px rgba(122, 122, 122, 0.2);
+    text-decoration: none;
+    display: none;
+    cursor: none;
+  }
+  .about{
+    display: block;
+  }
+  #exp {
+    display: none;
+  }
+  .card {
+    display: flex;
+    flex-direction: column;
+    background: linear-gradient(
+      to right bottom,
+      rgba(255, 255, 255, 0.7),
+      rgba(255, 255, 255, 0.3)
+    );
+    border-radius: 1rem;
+    margin: 3rem 0;
+    height: 30%;
+    padding: 0.5rem 1rem;
+    min-width: 70%;
+    box-shadow: 6px 6px 20px rgba(122, 122, 122, 0.2);
+  }
+  #pro {
+    display: none;
+  }
+  .pro-card {
+    display: flex;
+    flex-direction: column;
+    background: linear-gradient(
+      to right bottom,
+      rgba(255, 255, 255, 0.7),
+      rgba(255, 255, 255, 0.3)
+    );
+    border-radius: 1rem;
+    margin: 2rem 0;
+    height: 18vh;
+    padding: 0.5rem 1rem;
+    box-shadow: 6px 6px 20px rgba(122, 122, 122, 0.2);
+  }
+  
+  .blog {
+    display: none;
+  }
+  
+  .link :hover {
+    color: red;
+    font-size: 1.1rem;
+  }
+  #experience :hover {
+    color: red;
+    font-size: 1rem;
+  }
+  
+  @media screen and (max-width: 750px) {
+    body {
+      display: none;
+    }
+  }
+  
+  
+  
